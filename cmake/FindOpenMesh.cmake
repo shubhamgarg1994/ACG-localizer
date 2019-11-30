@@ -10,8 +10,9 @@
 # ENDIF (OPENMESH_INCLUDE_DIR)
 
 
-FIND_PATH(OPENMESH_INCLUDE_DIR OpenMesh/Core/Geometry/VectorT.hh 
-	PATHS "${CMAKE_SOURCE_DIR}/src/OpenMesh_vec" )
+FIND_PATH(OPENMESH_INCLUDE_DIR OpenMesh_vec/OpenMesh/Core/Geometry/VectorT.hh 
+	PATHS "/home/shubham/ACG_Localizer/src" 
+	NO_DEFAULT_PATH)
 	
 if( OPENMESH_INCLUDE_DIR )
     set( OPENMESH_FOUND TRUE )

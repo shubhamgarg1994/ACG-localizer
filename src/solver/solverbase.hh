@@ -38,7 +38,7 @@
 
 #include <vector>
 
-#include <OpenMesh/Core/Geometry/VectorT.hh>
+#include "../OpenMesh_vec/OpenMesh/Core/Geometry/VectorT.hh"
 
 #include "../math/math.hh"
 #include "../math/matrix3x3.hh"

@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.6)
 
-project (acg_localizer)
+project (ACGLocalizer)
 
 # add our macro directory to cmake search path
 if (EXISTS "${CMAKE_SOURCE_DIR}/cmake")
@@ -55,7 +55,6 @@ else()
    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
-
 add_subdirectory (src)
 
 # testing
@@ -63,3 +62,35 @@ if( ENABLE_TESTS )
     add_subdirectory (test)
 endif()
 
+# Install header files.
+install(DIRECTORY src/
+        DESTINATION include/acglocalizer
+        FILES_MATCHING PATTERN "*.h")
+
+install(DIRECTORY src/
+        DESTINATION include/acglocalizer
+        FILES_MATCHING PATTERN "*.hpp")
+
+install(DIRECTORY src/
+        DESTINATION include/acglocalizer
+        FILES_MATCHING PATTERN "*.hh")
+
+# Generate and install CMake configuration.
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMakeConfig.cmake.in" 
+               "${CMAKE_CURRENT_BINARY_DIR}/ACGLOCALIZERConfig.cmake" @ONLY)
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/ACGLOCALIZERConfig.cmake"
+        DESTINATION "share/acglocalizer")
+
+# Install find_package scripts for dependencies.
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cmake
+        DESTINATION share/acglocalizer
+        FILES_MATCHING PATTERN "Find*.cmake")
+
+install(DIRECTORY src/ann/lib
+        DESTINATION lib/acglocalizer
+        FILES_MATCHING PATTERN "*.a")
+
+install(DIRECTORY src/flann-1.6.11/build/lib
+        DESTINATION lib/acglocalizer
+        FILES_MATCHING PATTERN "*.a")

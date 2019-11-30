@@ -31,7 +31,7 @@
 
 #include "math.hh"
 
-#include <OpenMesh/Core/Geometry/VectorT.hh>
+#include "../OpenMesh_vec/OpenMesh/Core/Geometry/VectorT.hh"
 
 
 #define COUNT_MATRIX_MEMORY

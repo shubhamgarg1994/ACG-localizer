@@ -60,7 +60,7 @@
 //== INCLUDES =================================================================
 
 
-#include <OpenMesh/Core/System/config.h>
+#include "../System/config.h"
 #include <iostream>
 #include <assert.h>
 #include <math.h>

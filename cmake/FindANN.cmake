@@ -19,16 +19,20 @@ elseif( APPLE )
 endif()
 
 FIND_PATH(ANN_INCLUDE_DIR ANN/ANN.h
-	  PATHS "/home/shubham/ACG_Localizer_v_1_2_2/src/ann/include"
+	  PATHS "/home/shubham/ACG_Localizer/src/ann/include"
           NO_DEFAULT_PATH
                 )
 
 if( ANN_INCLUDE_DIR )
    set( ANN_FOUND TRUE )
-   set( ANN_LIBRARY_DIR "/home/shubham/ACG_Localizer_v_1_2_2/src/ann/lib" )
+   set( ANN_LIBRARY_DIR "/home/shubham/ACG_Localizer/src/ann/lib" )
    set( ANN_LIBRARY optimized ANN debug ANN )
 
 ELSE (ANN_INCLUDE_DIR)
    SET(ANN_FOUND FALSE )
 ENDIF (ANN_INCLUDE_DIR )
 
+
+install(DIRECTORY src/
+       DESTINATION include/acglocalizer
+       FILES_MATCHING PATTERN "*.h")
