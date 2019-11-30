@@ -1072,7 +1072,7 @@ int main (int argc, char **argv)
     nb_points_per_component[ *it ] += 1;
   
   // for every connected component, get pointers to its 3D points
-  float **points_per_component[ nb_connected_components ];
+  double **points_per_component[ nb_connected_components ];
   uint32_t *indices_per_component[ nb_connected_components ];
   
   // store pointers to the appropriate points
@@ -1081,7 +1081,7 @@ int main (int argc, char **argv)
     
     for( uint32_t i=0; i<nb_connected_components; ++i )
     {
-      points_per_component[i] = new float*[ nb_points_per_component[i] ];
+      points_per_component[i] = new double*[ nb_points_per_component[i] ];
       indices_per_component[i] = new uint32_t[ nb_points_per_component[i] ];
     }
     
@@ -1948,7 +1948,7 @@ int main (int argc, char **argv)
           else
           {
             std::list< uint32_t > new_edge( 1, point_counter );
-            image_edges.insert( std::make_pair< uint32_t, std::list< uint32_t > >( *it_images_point, new_edge ) );
+            image_edges.insert( std::make_pair( *it_images_point, new_edge ) );
           }
         }
       }
