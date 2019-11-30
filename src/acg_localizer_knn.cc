@@ -60,7 +60,7 @@
 #include "exif_reader/exif_reader.hh"
 
 // simple vector class for 3D points
-#include <OpenMesh/Core/Geometry/VectorT.hh>
+#include "OpenMesh_vec/OpenMesh/Core/Geometry/VectorT.hh"
 
 // the ANN library
 #include <ANN/ANN.h>

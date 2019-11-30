@@ -22,17 +22,22 @@ FIND_PATH(ANN_INCLUDE_DIR ANN/ANN.h
 	  PATHS "/home/shubham/ACG_Localizer/src/ann/include"
           NO_DEFAULT_PATH
                 )
+#SET(CMAKE_FIND_LIBRARY_PREFIXES "lib")
+#SET(CMAKE_FIND_LIBRARY_SUFFIXES ".so" ".a")
 
 if( ANN_INCLUDE_DIR )
    set( ANN_FOUND TRUE )
    set( ANN_LIBRARY_DIR "/home/shubham/ACG_Localizer/src/ann/lib" )
    set( ANN_LIBRARY optimized ANN debug ANN )
 
+   find_library(ANN_LIBRARIES
+    NAMES
+    ANN
+    HINTS
+    ${ANN_LIBRARY_DIR}
+    )
+    
 ELSE (ANN_INCLUDE_DIR)
    SET(ANN_FOUND FALSE )
 ENDIF (ANN_INCLUDE_DIR )
 
-
-install(DIRECTORY src/
-       DESTINATION include/acglocalizer
-       FILES_MATCHING PATTERN "*.h")
