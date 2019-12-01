@@ -4,9 +4,3 @@
 *build/*
 *lib/*
 *build*
-*.db
-*.key
-assignments.txt
-BundleInfo.txt
-bundler
-*.cluster
