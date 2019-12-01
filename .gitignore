@@ -9,3 +9,4 @@
 assignments.txt
 BundleInfo.txt
 bundler
+*.cluster
