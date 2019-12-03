@@ -23,61 +23,7 @@
 \*===========================================================================*/
 
 #define __STDC_LIMIT_MACROS
-
-// C++ includes
-#include <vector>
-#include <set>
-#include <map>
-#include <iostream>
-#include <iomanip>
-#include <fstream>
-#include <algorithm>
-#include <stdint.h>
-#include <string>
-#include <algorithm>
-#include <climits>
-#include <float.h>
-#include <cmath>
-#include <sstream>
-#include <stdio.h>
-#include <unordered_map>
-
-// includes for classes dealing with SIFT-features
-#include "features/SIFT_loader.hh"
-#include "features/visual_words_handler.hh"
-
-// stopwatch
-#include "timer.hh"
-
-// math functionality
-#include "math/projmatrix.hh"
-#include "math/matrix3x3.hh"
-
-// RANSAC
-#include "RANSAC.hh"
-
-// exif reader to get the width and height out
-// of the exif tags of an image
-#include "exif_reader/exif_reader.hh"
-
-// simple vector class for 3D points
-#include "OpenMesh_vec/OpenMesh/Core/Geometry/VectorT.hh"
-
-// the ANN library
-#include <ANN/ANN.h>
-
-////
-// constants
-////
-
-// uint32_t minimal_RANSAC_solution = 10;
-uint32_t minimal_RANSAC_solution = 12;
-
-float nn_ratio = 0.49f; // 0.8^2 = 0.64, 0.7^2=0.49, 0.6=0.36 since we use squared distances
-// float nn_ratio = 0.36f;
-float min_inlier = 0.0f;
-// float min_inlier = 0.0f;
-double ransac_max_time = 60.0; // run RANSAC max 1m;
+#include "query_vector.hh"
 
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -85,72 +31,54 @@ double ransac_max_time = 60.0; // run RANSAC max 1m;
 // Actuall localization method for kd-tree based search
 ////
 
-int main(int argc, char **argv)
+int query_vector(std::string keylist, int nb_leafs, std::string vw_assignments, int desc_mode, int method, std::string results, std::vector<std::vector<double>> &query_vector)
 {
+	std::cout << "__________________________________________________________________________________________________________________________" << std::endl;
+	std::cout << " -                                                                                                                        - " << std::endl;
+	std::cout << " -        Localization method using approximate k-nn search (with flann & one kd-tree).                                   - " << std::endl;
+	std::cout << " -                               2011 by Torsten Sattler (tsattler@cs.rwth-aachen.de)                                     - " << std::endl;
+	std::cout << " -                                                                                                                        - " << std::endl;
+	std::cout << " - usage: acg_localizer_knn list nb_leafs descriptors desc_mode method min_inlier results                                 - " << std::endl;
+	std::cout << " - Parameters:                                                                                                            - " << std::endl;
+	std::cout << " -  list                                                                                                                  - " << std::endl;
+	std::cout << " -     List containing the filenames of all the .key files that should be used as query. It is assumed that the           - " << std::endl;
+	std::cout << " -     corresponding images have the same filename except of ending in .jpg.                                              - " << std::endl;
+	std::cout << " -                                                                                                                        - " << std::endl;
+	std::cout << " -  nb_leafs                                                                                                              - " << std::endl;
+	std::cout << " -     The number of leaf nodes to visit for approximate k-nn search.                                                     - " << std::endl;
+	std::cout << " -                                                                                                                        - " << std::endl;
+	std::cout << " -  descriptors                                                                                                           - " << std::endl;
+	std::cout << " -     The assignments assigning descriptors (and 3D points) to visual words, computed by the method                      - " << std::endl;
+	std::cout << " -     compute_desc_assignments. The assignments should be computed with the compute_desc_assignments's mode 2 if you set - " << std::endl;
+	std::cout << " -     desc_mode to 1 and mode 3 if you set desc_mode to 0                                                                - " << std::endl;
+	std::cout << " -                                                                                                                        - " << std::endl;
+	std::cout << " -  desc_mode                                                                                                             - " << std::endl;
+	std::cout << " -     The way the descriptors in the assignments file are stored (0 = unsigned char, 1 = float).                         - " << std::endl;
+	std::cout << " -                                                                                                                        - " << std::endl;
+	std::cout << " -  method                                                                                                                - " << std::endl;
+	std::cout << " -     0 for FLANN, 1 for ANN, 2 for ANN re-normalized to L2-norm 2. 3 for FLANN using k-means trees.                     - " << std::endl;
+	std::cout << " -                                                                                                                        - " << std::endl;
+	std::cout << " -  min_inlier                                                                                                            - " << std::endl;
+	std::cout << " -     Minimal inlier ratio.                                                                                              - " << std::endl;
+	std::cout << " -                                                                                                                        - " << std::endl;
+	std::cout << " -  results                                                                                                               - " << std::endl;
+	std::cout << " -     The program will write the results of the localization into a text file of name \"results\". It has the following  - " << std::endl;
+	std::cout << " -     format, where every line in the file belongs to one query image and has the format                                 - " << std::endl;
+	std::cout << " -       #inliers #(correspondences found) (time needed to compute the visual words, in seconds) (time needed to establish- " << std::endl;
+	std::cout << " -       the correspondences, in seconds) (time needed for RANSAC, in seconds)                                            - " << std::endl;
+	std::cout << "____________________________________________________________________________________________________________________________" << std::endl;
 
-	if (argc < 8)
-	{
-		std::cout << "__________________________________________________________________________________________________________________________" << std::endl;
-		std::cout << " -                                                                                                                        - " << std::endl;
-		std::cout << " -        Localization method using approximate k-nn search (with flann & one kd-tree).                                   - " << std::endl;
-		std::cout << " -                               2011 by Torsten Sattler (tsattler@cs.rwth-aachen.de)                                     - " << std::endl;
-		std::cout << " -                                                                                                                        - " << std::endl;
-		std::cout << " - usage: acg_localizer_knn list nb_leafs descriptors desc_mode method min_inlier results                                 - " << std::endl;
-		std::cout << " - Parameters:                                                                                                            - " << std::endl;
-		std::cout << " -  list                                                                                                                  - " << std::endl;
-		std::cout << " -     List containing the filenames of all the .key files that should be used as query. It is assumed that the           - " << std::endl;
-		std::cout << " -     corresponding images have the same filename except of ending in .jpg.                                              - " << std::endl;
-		std::cout << " -                                                                                                                        - " << std::endl;
-		std::cout << " -  nb_leafs                                                                                                              - " << std::endl;
-		std::cout << " -     The number of leaf nodes to visit for approximate k-nn search.                                                     - " << std::endl;
-		std::cout << " -                                                                                                                        - " << std::endl;
-		std::cout << " -  descriptors                                                                                                           - " << std::endl;
-		std::cout << " -     The assignments assigning descriptors (and 3D points) to visual words, computed by the method                      - " << std::endl;
-		std::cout << " -     compute_desc_assignments. The assignments should be computed with the compute_desc_assignments's mode 2 if you set - " << std::endl;
-		std::cout << " -     desc_mode to 1 and mode 3 if you set desc_mode to 0                                                                - " << std::endl;
-		std::cout << " -                                                                                                                        - " << std::endl;
-		std::cout << " -  desc_mode                                                                                                             - " << std::endl;
-		std::cout << " -     The way the descriptors in the assignments file are stored (0 = unsigned char, 1 = float).                         - " << std::endl;
-		std::cout << " -                                                                                                                        - " << std::endl;
-		std::cout << " -  method                                                                                                                - " << std::endl;
-		std::cout << " -     0 for FLANN, 1 for ANN, 2 for ANN re-normalized to L2-norm 2. 3 for FLANN using k-means trees.                     - " << std::endl;
-		std::cout << " -                                                                                                                        - " << std::endl;
-		std::cout << " -  min_inlier                                                                                                            - " << std::endl;
-		std::cout << " -     Minimal inlier ratio.                                                                                              - " << std::endl;
-		std::cout << " -                                                                                                                        - " << std::endl;
-		std::cout << " -  results                                                                                                               - " << std::endl;
-		std::cout << " -     The program will write the results of the localization into a text file of name \"results\". It has the following  - " << std::endl;
-		std::cout << " -     format, where every line in the file belongs to one query image and has the format                                 - " << std::endl;
-		std::cout << " -       #inliers #(correspondences found) (time needed to compute the visual words, in seconds) (time needed to establish- " << std::endl;
-		std::cout << " -       the correspondences, in seconds) (time needed for RANSAC, in seconds)                                            - " << std::endl;
-		std::cout << "____________________________________________________________________________________________________________________________" << std::endl;
-		return -1;
-	}
-
-	////
-	// get the parameters
-	std::string keylist(argv[1]);
-	int nb_leafs = atoi(argv[2]);
-	std::string vw_assignments(argv[3]);
-	int desc_mode = atoi(argv[4]);
 	if (desc_mode != 0 && desc_mode != 1)
 	{
 		std::cerr << " ERROR: Unknown desc_mode " << desc_mode << ", aborting" << std::endl;
 		return -1;
 	}
-	int method = atoi(argv[5]);
+
 	if (method < 0 || method > 3)
 	{
 		std::cerr << " ERROR: Unknown method " << method << ", aborting" << std::endl;
 		return -1;
 	}
-
-	min_inlier = 0.0f;
-	min_inlier = atof(argv[6]);
-
-	std::cout << " Assumed minimal inlier-ratio: " << min_inlier << std::endl;
-
-	std::string results(argv[7]);
 
 	////
 	// create and open the output file
@@ -375,6 +303,7 @@ int main(int argc, char **argv)
 	std::vector<uint32_t> computed_assignments(100000, 0);
 	std::vector<float> computed_squared_distances(100000, 0);
 
+	std::vector<std::vector<double>> query_vectors(nb_keyfiles, std::vector<double>(100000, 0));
 	for (uint32_t i = 0; i < nb_keyfiles; ++i, N += 1.0)
 	{
 		std::cout << std::endl
@@ -510,197 +439,12 @@ int main(int argc, char **argv)
 		for(size_t i=0; i< nb_descriptors;i++)
 			std::cout << "Query vector after normalizing for 3D point " <<  i  << " is " << query_vector[i] << std::endl;
 
-	// 	////
-	// 	// establish 2D-3D correspondences by using the computed nearest neighbors
-	// 	timer.Init();
-	// 	timer.Start();
-	// 	Timer all_timer;
-	// 	all_timer.Init();
-	// 	all_timer.Start();
-
-	// 	// we store for each 3D point the corresponding 2D feature as well as the squared distance
-	// 	// this is needed in case that two 2D features are assigned to one 3D point, because
-	// 	// we only want to keep the correspondence to the 2D point with the most similar descriptor
-	// 	// i.e. the smallest Euclidean distance in descriptor space
-	// 	std::map<uint32_t, std::pair<uint32_t, float>> corr_3D_to_2D;
-	// 	corr_3D_to_2D.clear();
-
-	// 	std::map<uint32_t, std::pair<uint32_t, float>>::iterator map_it_3D;
-
-	// 	for (size_t j = 0; j < nb_loaded_keypoints; ++j)
-	// 	{
-	// 		uint32_t index = 2 * j;
-	// 		uint32_t nn = point_id_per_descriptor[computed_assignments[index]];
-	// 		// compute the SIFT-ratio
-	// 		float ratio = computed_squared_distances[index] / computed_squared_distances[index + 1];
-
-	// 		if (ratio < nn_ratio)
-	// 		{
-	// 			// we found one, so we need check for mutual nearest neighbors
-	// 			map_it_3D = corr_3D_to_2D.find(nn);
-
-	// 			if (map_it_3D != corr_3D_to_2D.end())
-	// 			{
-	// 				if (map_it_3D->second.second > computed_squared_distances[index])
-	// 				{
-	// 					map_it_3D->second.first = j;
-	// 					map_it_3D->second.second = computed_squared_distances[index];
-	// 				}
-	// 			}
-	// 			else
-	// 			{
-	// 				corr_3D_to_2D.insert(std::make_pair(nn, std::make_pair(j, computed_squared_distances[index])));
-	// 			}
-	// 		}
-	// 	}
-
-	// 	////
-	// 	// compute and store the correspondences such that we can easily hand them over to RANSAC
-
-	// 	// store the correspondences for RANSAC
-	// 	std::vector<float> c2D, c3D;
-	// 	c2D.clear();
-	// 	c3D.clear();
-
-	// 	std::vector<std::pair<uint32_t, uint32_t>> final_correspondences; // first the 2D, then the 3D point
-	// 	final_correspondences.clear();
-
-	// 	// the 2D and 3D positions of features and points are simply concatenated into 2 vectors
-	// 	for (map_it_3D = corr_3D_to_2D.begin(); map_it_3D != corr_3D_to_2D.end(); ++map_it_3D)
-	// 	{
-	// 		c2D.push_back(keypoints[map_it_3D->second.first].x);
-	// 		c2D.push_back(keypoints[map_it_3D->second.first].y);
-
-	// 		c3D.push_back(points3D[map_it_3D->first][0]);
-	// 		c3D.push_back(points3D[map_it_3D->first][1]);
-	// 		c3D.push_back(points3D[map_it_3D->first][2]);
-
-	// 		final_correspondences.push_back(std::make_pair(map_it_3D->second.first, map_it_3D->first));
-	// 	}
-
-	// 	timer.Stop();
-	// 	std::cout << " computed correspondences in " << timer.GetElapsedTimeAsString() << std::endl;
-	// 	corr_time = timer.GetElapsedTime();
-
-	// 	uint32_t nb_corr = c2D.size() / 2;
-
-	// 	////
-	// 	// do the pose verification using RANSAC
-
-	// 	RANSAC::computation_type = P6pt;
-	// 	RANSAC::stop_after_n_secs = true;
-	// 	RANSAC::max_time = ransac_max_time;
-	// 	RANSAC::error = 10.0f; // for P6pt this is the SQUARED reprojection error in pixels
-	// 	RANSAC ransac_solver;
-
-	// 	std::cout << " applying RANSAC on " << nb_corr << std::endl;
-	// 	timer.Init();
-	// 	timer.Start();
-	// 	ransac_solver.apply_RANSAC(c2D, c3D, nb_corr, std::min(std::max(float(minimal_RANSAC_solution) / float(nb_corr), min_inlier), 1.0f));
-	// 	timer.Stop();
-	// 	RANSAC_time = timer.GetElapsedTime();
-
-	// 	all_timer.Stop();
-
-	// 	// output the solution:
-	// 	std::cout << "#### found solution ####" << std::endl;
-	// 	std::cout << " needed time: " << all_timer.GetElapsedTimeAsString() << std::endl;
-
-	// 	// get the solution from RANSAC
-
-	// 	std::vector<uint32_t> inliers;
-
-	// 	inliers.assign(ransac_solver.get_inliers().begin(), ransac_solver.get_inliers().end());
-
-	// 	Util::Math::ProjMatrix proj_matrix = ransac_solver.get_projection_matrix();
-
-	// 	// decompose the projection matrix
-	// 	Util::Math::Matrix3x3 Rot, K;
-	// 	proj_matrix.decompose(K, Rot);
-	// 	proj_matrix.computeInverse();
-	// 	proj_matrix.computeCenter();
-	// 	std::cout << " camera calibration: " << K << std::endl;
-	// 	std::cout << " camera rotation: " << Rot << std::endl;
-	// 	std::cout << " camera position: " << proj_matrix.m_center << std::endl;
-
-	// 	ofs_details << inliers.size() << " " << nb_corr << " " << vw_time << " " << corr_time << " " << RANSAC_time << std::endl;
-
-	// 	std::cout << "#########################" << std::endl;
-
-	// 	// determine whether the image was registered or not
-	// 	// also update the statistics about timing, ...
-	// 	if (inliers.size() >= minimal_RANSAC_solution)
-	// 	{
-	// 		double N_reg = registered;
-	// 		avrg_reg_time = avrg_reg_time * N_reg / (N_reg + 1.0) + all_timer.GetElapsedTime() / (N_reg + 1.0);
-	// 		mean_inlier_ratio_accepted = mean_inlier_ratio_accepted * N_reg / (N_reg + 1.0) + double(inliers.size()) / (double(nb_corr) * (N_reg + 1.0));
-	// 		mean_nb_correspondences_accepted = mean_nb_correspondences_accepted * N_reg / (N_reg + 1.0) + double(nb_corr) / (N_reg + 1.0);
-	// 		mean_nb_features_accepted = mean_nb_features_accepted * N_reg / (N_reg + 1.0) + double(nb_loaded_keypoints) / (N_reg + 1.0);
-	// 		avrg_cor_computation_time_accepted = avrg_cor_computation_time_accepted * N_reg / (N_reg + 1.0) + corr_time / (N_reg + 1.0);
-	// 		avrg_RANSAC_time_registered = avrg_RANSAC_time_registered * N_reg / (N_reg + 1.0) + RANSAC_time / (N_reg + 1.0);
-	// 		++registered;
-	// 	}
-	// 	else
-	// 	{
-	// 		avrg_reject_time = avrg_reject_time * N_reject / (N_reject + 1.0) + all_timer.GetElapsedTime() / (N_reject + 1.0);
-	// 		mean_inlier_ratio_rejected = mean_inlier_ratio_rejected * N_reject / (N_reject + 1.0) + double(inliers.size()) / (double(nb_corr) * (N_reject + 1.0));
-	// 		mean_nb_correspondences_rejected = mean_nb_correspondences_rejected * N_reject / (N_reject + 1.0) + double(nb_corr) / (N_reject + 1.0);
-	// 		mean_nb_features_rejected = mean_nb_features_rejected * N_reject / (N_reject + 1.0) + double(nb_loaded_keypoints) / (N_reject + 1.0);
-	// 		avrg_cor_computation_time_rejected = avrg_cor_computation_time_rejected * N_reject / (N_reject + 1.0) + corr_time / (N_reject + 1.0);
-	// 		avrg_RANSAC_time_rejected = avrg_RANSAC_time_rejected * N_reject / (N_reject + 1.0) + RANSAC_time / (N_reject + 1.0);
-	// 		N_reject += 1.0;
-	// 	}
-
-	// 	// clean-up
-	// 	for (uint32_t j = 0; j < nb_loaded_keypoints; ++j)
-	// 	{
-	// 		if (descriptors[j] != 0)
-	// 			delete[] descriptors[j];
-	// 		descriptors[j] = 0;
-	// 	}
-
-	// 	descriptors.clear();
-	// 	keypoints.clear();
-	// 	inliers.clear();
-
-	// 	std::cout << std::endl
-	// 			  << std::endl
-	// 			  << " registered so far: " << registered << " / " << i + 1 << std::endl;
-	// 	std::cout << " average time needed to compute the correspondences: registered: " << avrg_cor_computation_time_accepted << " rejected: " << avrg_cor_computation_time_rejected << std::endl;
-	// 	std::cout << "avrg. registration time: " << avrg_reg_time << " ( " << registered << " , avrg. inlier-ratio: " << mean_inlier_ratio_accepted << ", avrg. nb correspondences : " << mean_nb_correspondences_accepted << " ) avrg. rejection time: " << avrg_reject_time << " ( " << N_reject << ", avrg. inlier-ratio : " << mean_inlier_ratio_rejected << " avrg. nb correspondences : " << mean_nb_correspondences_rejected << " ) " << std::endl
-	// 			  << std::endl;
+		query_vectors.push_back(query_vector);
 	}
 
 	ofs_details.close();
 
-	// std::cout << std::endl
-	// 		  << "#############################" << std::endl;
-	// std::cout << " total number registered: " << registered << " / " << nb_keyfiles << std::endl;
-	// std::cout << " average time for computing the vw assignments          : " << avrg_vw_time << " s for " << avrg_nb_features << " features (on average)" << std::endl;
-	// std::cout << " average time for succesfully registering image         : " << avrg_reg_time << " s " << std::endl;
-	// std::cout << " average time for rejecting an query image              : " << avrg_reject_time << " s " << std::endl;
-	// std::cout << " average inlier-ratio (registered)                      : " << mean_inlier_ratio_accepted << std::endl;
-	// std::cout << " average inlier-ratio (rejected)                        : " << mean_inlier_ratio_rejected << std::endl;
-	// std::cout << " average nb correspondences (registered)                : " << mean_nb_correspondences_accepted << std::endl;
-	// std::cout << " average nb correspondences (rejected)                  : " << mean_nb_correspondences_rejected << std::endl;
-	// std::cout << " average nb features        (registered)                : " << mean_nb_features_accepted << std::endl;
-	// std::cout << " average nb features        (rejected)                  : " << mean_nb_features_rejected << std::endl;
-	// std::cout << " avrg. time to compute the correspondences (registered) : " << avrg_cor_computation_time_accepted << std::endl;
-	// std::cout << " avrg. time to compute the correspondences (rejected)   : " << avrg_cor_computation_time_rejected << std::endl;
-	// std::cout << " avrg. time for RANSAC (registered)                     : " << avrg_RANSAC_time_registered << std::endl;
-	// std::cout << " avrg. time for RANSAC (rejected)                       : " << avrg_RANSAC_time_rejected << std::endl;
-	// std::cout << " minimum inlier-ratio for RANSAC                        : " << min_inlier << std::endl;
-	// std::cout << " search model                                           : "
-	// 		  << "approximate k-nn visiting " << nb_leafs << " leaf nodes " << std::endl;
-	// if (method == 2)
-	// 	std::cout << " search model                                           : all vectors normalized to unit length " << std::endl;
-	// std::cout << " model consists of                                      : " << nb_descriptors << " ";
-	// if (desc_mode == 0)
-	// 	std::cout << "unsigned char descriptors " << std::endl;
-	// else
-	// 	std::cout << "float descriptors " << std::endl;
-
-	// std::cout << "#############################" << std::endl;
+	std::cout << "#############################" << std::endl;
 
 	////
 	// clean-up
@@ -727,6 +471,4 @@ int main(int argc, char **argv)
 	ann_query_descriptor = 0;
 
 	annClose();
-
-	return query_vector;
 }
