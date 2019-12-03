@@ -55,6 +55,7 @@ add_executable (compute_desc_assignments compute_desc_assignments.cc ${sfm_SRC} 
 add_executable (acg_localizer ${exif_SRC} ${exif_HDR} ${features_SRC} ${features_HDR} timer.cc timer.hh ${math_SRC} ${math_HDR}  ${solver_SRC} ${solver_HDR} RANSAC.hh RANSAC.cc acg_localizer.cc )
 add_executable (acg_localizer_knn ${exif_SRC} ${exif_HDR} ${features_SRC} ${features_HDR} timer.cc timer.hh ${math_SRC} ${math_HDR} ${solver_SRC} ${solver_HDR} RANSAC.hh RANSAC.cc acg_localizer_knn.cc )
 add_executable (acg_localizer_active_search ${exif_SRC} ${exif_HDR} ${features_SRC} ${features_HDR} timer.cc timer.hh ${math_SRC} ${math_HDR}  ${solver_SRC} ${solver_HDR} ${sfm_SRC} ${sfm_HDR} RANSAC.hh RANSAC.cc acg_localizer_active_search.cc )
+add_executable (query_vector ${exif_SRC} ${exif_HDR} ${features_SRC} ${features_HDR} timer.cc timer.hh ${math_SRC} ${math_HDR} ${solver_SRC} ${solver_HDR} RANSAC.hh RANSAC.cc acg_localizer_knn.cc )
 
 # set libraries to link against
 target_link_libraries (Bundle2Info
@@ -78,6 +79,15 @@ target_link_libraries (acg_localizer
 
 
 target_link_libraries (acg_localizer_knn
+  ${OPENMESH_LIBRARY}
+  ${LAPACK_LIBRARY}
+  ${LAPACK_LIBRARIES}
+  ${GMM_LIBRARY}
+  ${FLANN_LIBRARY}
+  ${ANN_LIBRARY}
+)
+
+target_link_libraries (query_vector
   ${OPENMESH_LIBRARY}
   ${LAPACK_LIBRARY}
   ${LAPACK_LIBRARIES}
@@ -111,3 +121,6 @@ install( PROGRAMS ${CMAKE_BINARY_DIR}/src/acg_localizer_knn
 
 install( PROGRAMS ${CMAKE_BINARY_DIR}/src/acg_localizer_active_search
          DESTINATION ${CMAKE_BINARY_DIR}/bin) 
+
+install( PROGRAMS ${CMAKE_BINARY_DIR}/src/query_vector
+DESTINATION ${CMAKE_BINARY_DIR}/bin) 
