@@ -5,8 +5,7 @@
 # ANN_INCLUDE_DIR - theUTIL include directory
 # ANN_LIBRARY         - Link these to use UTIL
 # ANN_LIBRARY_DIR  - Library DIR of UTIL
-#   
-
+ 
 IF (ANN_INCLUDE_DIR)
  # Already in cache, be silent
  SET(ANN_FIND_QUIETLY TRUE)
@@ -18,10 +17,10 @@ elseif( APPLE )
   set( LIBDIR lib )
 endif()
 
-FIND_PATH(ANN_INCLUDE_DIR ANN/ANN.h
-	  PATHS "/home/shubham/ACG_Localizer/src/ann/include"
-          NO_DEFAULT_PATH
-                )
+FIND_PATH(ANN_INCLUDE_DIR ANN/ANN.h 
+          PATHS "/home/shubham/ACG_Localizer/src/ann/include"
+          NO_DEFAULT_PATH)
+                
 #SET(CMAKE_FIND_LIBRARY_PREFIXES "lib")
 #SET(CMAKE_FIND_LIBRARY_SUFFIXES ".so" ".a")
 
@@ -38,6 +37,6 @@ if( ANN_INCLUDE_DIR )
     )
     
 ELSE (ANN_INCLUDE_DIR)
-   SET(ANN_FOUND FALSE )
-ENDIF (ANN_INCLUDE_DIR )
+   SET(ANN_FOUND FALSE)
+ENDIF (ANN_INCLUDE_DIR)
 

@@ -20,6 +20,8 @@
 #include <stdio.h>
 #include <unordered_map>
 
+#include "ann/include/ANN/ANN.h"
+
 // includes for classes dealing with SIFT-features
 #include "features/SIFT_loader.hh"
 #include "features/visual_words_handler.hh"
@@ -41,8 +43,7 @@
 // simple vector class for 3D points
 #include "OpenMesh_vec/OpenMesh/Core/Geometry/VectorT.hh"
 
-// the ANN library
-#include <ANN/ANN.h>
-
-int query_vector(std::string keylist, int nb_leafs, std::string vw_assignments, int desc_mode, int method, std::string results, std::vector<std::vector<double>> &query_vector)
+int query_vector(std::string keylist, int nb_leafs, std::string vw_assignments, 
+				 int desc_mode, int method, std::string results, 
+				 std::vector<std::vector<double>> &query_vector);
 #endif

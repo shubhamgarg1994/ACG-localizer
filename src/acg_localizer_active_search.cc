@@ -69,7 +69,7 @@
 #include "exif_reader/exif_reader.hh"
 
 // ANN Libary, used to perform search in 3D
-#include <ANN/ANN.h>
+#include "ann/include/ANN/ANN.h"
 
 // simple vector class for 3D points
 #include "OpenMesh_vec/OpenMesh/Core/Geometry/VectorT.hh"

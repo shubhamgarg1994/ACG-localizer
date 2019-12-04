@@ -31,7 +31,9 @@
 // Actuall localization method for kd-tree based search
 ////
 
-int query_vector(std::string keylist, int nb_leafs, std::string vw_assignments, int desc_mode, int method, std::string results, std::vector<std::vector<double>> &query_vector)
+int query_vector(std::string keylist, int nb_leafs, std::string vw_assignments, 
+				 int desc_mode, int method, std::string results, 
+				 std::vector<std::vector<double>> &query_vector)
 {
 	std::cout << "__________________________________________________________________________________________________________________________" << std::endl;
 	std::cout << " -                                                                                                                        - " << std::endl;
